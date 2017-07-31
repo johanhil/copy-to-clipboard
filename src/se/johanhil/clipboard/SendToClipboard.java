@@ -20,7 +20,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.ClipboardManager;
+import android.content.ClipData;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -28,10 +28,7 @@ public class SendToClipboard extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // get the clipboard system service
-        ClipboardManager clipboardManager = (ClipboardManager) this.getSystemService(CLIPBOARD_SERVICE);
-        
+
         // and the text 
         // TODO perhaps there are more fields like "EXTRA_SUBJECT", this should be handled.
         Intent intent = getIntent();
@@ -55,7 +52,20 @@ public class SendToClipboard extends Activity {
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         
         // and put the text the clipboard
-        clipboardManager.setText(text);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+            // get the clipboard system service
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText(label, text);
+            // https://developer.android.com/reference/android/content/ClipData.html
+            clipboard.setPrimaryClip(clip);
+        }
+        else{
+            // get the clipboard system service
+            // https://stackoverflow.com/a/19253868/4723940
+            android.text.ClipboardManager deprecatedClipboard = (android.text.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            // https://stackoverflow.com/a/18355356/4723940
+            deprecatedClipboard.setText(text);
+        }
         
         // alert the user that the text is in the clipboard and we're done
         Toast.makeText(this, R.string.text_copied, Toast.LENGTH_SHORT).show();
